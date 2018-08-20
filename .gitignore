@@ -1,0 +1,8 @@
+/*.jpg
+weight/faceboxes.pt
+weight/faceboxes200.pt
+weight/faceboxes_300.pt
+__pycache__/*
+*.pyc
+*.sh
+
