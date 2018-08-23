@@ -5,4 +5,4 @@ and add the augmentation from SSD,and change the code to pytorch 0.41.
 
 # FDDB
 
-![fddb](picture/comparison.png) 
+![fddb](picture/comparison_with_paper.png) 
