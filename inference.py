@@ -23,18 +23,19 @@ def detect(im):
 
     boxes, labels, probs = data_encoder.decode(loc.data.squeeze(0),
                                                 F.softmax(conf.squeeze(0), dim=1))
-    boxes = boxes.numpy()
-    probs = probs.detach().numpy()
-    if h <= w:
-        boxes[:,1] = boxes[:,1]*w-pad1
-        boxes[:,3] = boxes[:,3]*w-pad1
-        boxes[:,0] = boxes[:,0]*w
-        boxes[:,2] = boxes[:,2]*w
-    else:
-        boxes[:,1] = boxes[:,1]*h
-        boxes[:,3] = boxes[:,3]*h
-        boxes[:,0] = boxes[:,0]*h-pad1
-        boxes[:,2] = boxes[:,2]*h-pad1
+    if probs != 0:
+        boxes = boxes.numpy()
+        probs = probs.detach().numpy()
+        if h <= w:
+            boxes[:,1] = boxes[:,1]*w-pad1
+            boxes[:,3] = boxes[:,3]*w-pad1
+            boxes[:,0] = boxes[:,0]*w
+            boxes[:,2] = boxes[:,2]*w
+        else:
+            boxes[:,1] = boxes[:,1]*h
+            boxes[:,3] = boxes[:,3]*h
+            boxes[:,0] = boxes[:,0]*h-pad1
+            boxes[:,2] = boxes[:,2]*h-pad1
 
     return boxes, probs
 
@@ -46,8 +47,11 @@ def testIm(file):
     h,w,_ = im.shape
     boxes, probs = detect(im)
 
+    if probs == 0:
+        print('There is no face in the image')
+        exit()
     for i, (box) in enumerate(boxes):
-        print('i', i, 'box', box)
+        print('i=', i, 'box=', box)
         x1 = int(box[0])
         x2 = int(box[2])
         y1 = int(box[1])
@@ -67,6 +71,6 @@ if __name__ == '__main__':
 
     # given image path, predict and show
     root_path = "picture/"
-    picture = '13.jpg'
+    picture = 'xx.jpg'
     testIm(root_path + picture)
 

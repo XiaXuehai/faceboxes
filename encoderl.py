@@ -173,14 +173,13 @@ class DataEncoder:
         # conf[:,0] means no face
         # conf[:,1] means face
         # filter face by a value of 0.4
-        conf[:,0] = 0.4
+        #conf[:,0] = 0.4
 
         max_conf, labels = conf.max(1) #[21842,1]
 
         if labels.long().sum().item() is 0:
-            sconf, slabel = conf.max(0)
-            max_conf[slabel[0:1]] = sconf[0:1]
-            labels[slabel[0:1]] = 1
+            # no face in image
+            return 0, 0, 0
 
         ids = labels.nonzero().squeeze(1)
         # print('ids', ids)
