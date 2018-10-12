@@ -72,7 +72,7 @@ class DataEncoder:
         iou = inter / (area1 + area2 - inter)
         return iou
 
-    def nms(self,bboxes,scores,threshold=0.5):
+    def nms(self, bboxes, scores, threshold=0.5):
         '''
         bboxes(tensor) [N,4]
         scores(tensor) [N,]
@@ -84,13 +84,16 @@ class DataEncoder:
         areas = (x2-x1) * (y2-y1)
 
         _,order = scores.sort(0,descending=True)
+
         keep = []
         while order.numel() > 0:
-            i = order[0].item()
-            keep.append(i)
-
             if order.numel() == 1:
+                i = order.item()
+                keep.append(i)
                 break
+            else:
+                i = order[0].item()
+                keep.append(i)
 
             xx1 = x1[order[1:]].clamp(min=x1[i])
             yy1 = y1[order[1:]].clamp(min=y1[i])
@@ -156,7 +159,7 @@ class DataEncoder:
 
         return loc, conf
 
-    def decode(self,loc,conf):
+    def decode(self, loc, conf):
         '''
         將预测出的 loc/conf转换成真实的人脸框
         loc [21842,4]
@@ -167,21 +170,23 @@ class DataEncoder:
         wh  = torch.exp(loc[:,2:] * variances[1]) * self.default_boxes[:,2:]
         boxes = torch.cat([cxcy-wh/2,cxcy+wh/2],1) #[21824,4]
         
+        # conf[:,0] means no face
+        # conf[:,1] means face
+        # filter face by a value of 0.4
         conf[:,0] = 0.4
 
         max_conf, labels = conf.max(1) #[21842,1]
-        # print(max_conf)
-        print('labels', labels.long().sum())
+
         if labels.long().sum().item() is 0:
             sconf, slabel = conf.max(0)
-            max_conf[slabel[0:5]] = sconf[0:5]
-            labels[slabel[0:5]] = 1
+            max_conf[slabel[0:1]] = sconf[0:1]
+            labels[slabel[0:1]] = 1
 
         ids = labels.nonzero().squeeze(1)
         # print('ids', ids)
         # print('boxes', boxes.size(), boxes[ids])
 
-        keep = self.nms(boxes[ids],max_conf[ids])#.squeeze(1))
+        keep = self.nms(boxes[ids],max_conf[ids])
 
         return boxes[ids][keep], labels[ids][keep], max_conf[ids][keep]
 

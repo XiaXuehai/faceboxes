@@ -24,7 +24,7 @@ def train():
         net.cuda()
 
     print('load model...')
-    net.load_state_dict(torch.load('weight/faceboxes_add_norm.pt'))
+    net.load_state_dict(torch.load('weight/faceboxes.pt'))
 
 
     criterion = MultiBoxLoss()
@@ -41,7 +41,7 @@ def train():
                                 list_file='data/val_rewrite.txt',
                                 train=False,
                                 transform = [transforms.ToTensor()])
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=1)
     print('the dataset has %d images' % (len(train_dataset)))
     print('the batch_size is %d' % (batch_size))
 
@@ -77,36 +77,35 @@ def train():
                 print ('Epoch [{}/{}], Iter [{}/{}] Loss: {:.4f}, average_loss: {:.4f}'.format(
                     epoch+1, num_epochs, i+1, len(train_loader), loss.item(), total_loss / (i+1)))
 
-                #train_loss = total_loss /(len(train_dataset) / batch_size)
                 vis.line(Y=np.array([total_loss / (i+1)]), X=np.array([num_iter]),
                         win=win,
                         name='train',
                         update='append')
                 num_iter += 1
-        # val_loss = 0.0
-        # net.eval()
-        # for idx, (images, loc_targets,conf_targets) in enumerate(val_loader):
-        #     with torch.no_grad():
-        #         if use_gpu:
-        #             images = images.cuda()
-        #             loc_targets = loc_targets.cuda()
-        #             conf_targets = conf_targets.cuda()
-        #
-        #         loc_preds, conf_preds = net(images)
-        #         loss = criterion(loc_preds, loc_targets, conf_preds, conf_targets)
-        #         val_loss += loss.item()
-        # val_loss /= len(val_dataset)/batch_size
-        # vis.line(Y=np.array([val_loss]), X=np.array([epoch]),
-        #          win=win,
-        #          name='val',
-        #          update='append')
-        # print('loss of val is {}'.format(val_loss))
+        val_loss = 0.0
+        net.eval()
+        for idx, (images, loc_targets,conf_targets) in enumerate(val_loader):
+            with torch.no_grad():
+                if use_gpu:
+                    images = images.cuda()
+                    loc_targets = loc_targets.cuda()
+                    conf_targets = conf_targets.cuda()
+
+                loc_preds, conf_preds = net(images)
+                loss = criterion(loc_preds, loc_targets, conf_preds, conf_targets)
+                val_loss += loss.item()
+        val_loss /= len(val_dataset)/batch_size
+        vis.line(Y=np.array([val_loss]), X=np.array([epoch*40+40]),
+                 win=win,
+                 name='val',
+                 update='append')
+        print('loss of val is {}'.format(val_loss))
 
         if not os.path.exists('weight/'):
             os.mkdir('weight')
 
         print('saving model ...')
-        torch.save(net.state_dict(),'weight/faceboxes_add_norm.pt')
+        torch.save(net.state_dict(),'weight/faceboxes.pt')
     
 
 if __name__ == '__main__':

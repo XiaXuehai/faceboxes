@@ -16,7 +16,6 @@ import torchvision.transforms as transforms
 import cv2
 
 from encoderl import DataEncoder
-from augmentations import SSDAugmentation
 
 class ListDataset(data.Dataset):
 
@@ -65,13 +64,17 @@ class ListDataset(data.Dataset):
 
         if self.train:
             img, boxes, labels = self.random_crop(img, boxes, labels)
-            # img = self.random_bright(img)
             img, boxes = self.random_flip(img, boxes)
-            img, boxes, labels = SSDAugmentation()(img, boxes, labels)
 
+            img = img.astype(np.float32)
+            img = self.random_bright(img)
+            img = self.random_swapchannel(img)
+            img = self.random_distort(img)
+            img = img.astype(np.uint8)
 
         h,w,_ = img.shape
         img = cv2.resize(img,(self.image_size,self.image_size))
+
 
         boxes /= torch.Tensor([w,h,w,h]).expand_as(boxes)
         for t in self.transform:
@@ -151,12 +154,61 @@ class ListDataset(data.Dataset):
                 selected_labels = labels.index_select(0, mask.nonzero().squeeze(1))
                 return img, selected_boxes_selected, selected_labels
 
-    def random_bright(self, im, delta=16):
-        alpha = random.random()
-        if alpha > 0.3:
-            im = im * alpha + random.randrange(-delta,delta)
-            im = im.clip(min=0,max=255).astype(np.uint8)
+    def random_bright(self, im, delta=32):
+        if random.random() < 0.5:
+            delta = random.uniform(-delta, delta)
+            im += delta
+            im = im.clip(min=0, max=255)
         return im
+
+
+    def random_swapchannel(self, im):
+        perms = ((0, 1, 2), (0, 2, 1),
+                 (1, 0, 2), (1, 2, 0),
+                 (2, 0, 1), (2, 1, 0))
+        if random.random() < 0.5:
+            swap = perms[random.randrange(0, len(perms))]
+            im = im[:, :, swap]
+        return im
+
+    def RandomContrast(self, im, lower=0.5, upper=1.5):
+        if random.random() < 0.5:
+            alpha = random.uniform(lower, upper)
+            im *= alpha
+            im = im.clip(min=0, max=255)
+        return im
+
+    def RandomSaturation(self, im, lower=0.5, upper=1.5):
+        if random.random() < 0.5:
+            im[:, :, 1] *= random.uniform(lower, upper)
+
+        return im
+
+    def RandomHue(self, im, delta=18.0):
+        if random.random() < 0.5:
+            im[:, :, 0] += random.uniform(-delta, delta)
+            im[:, :, 0][im[:, :, 0] > 360.0] -= 360.0
+            im[:, :, 0][im[:, :, 0] < 0.0] += 360.0
+        return im
+
+    def for_distort(self, im):
+        im = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
+        self.RandomSaturation(im)
+        self.RandomHue(im)
+        im = cv2.cvtColor(im, cv2.COLOR_HSV2BGR)
+        return im
+
+
+    def random_distort(self, im):
+        if random.random() < 0.5:
+            self.RandomContrast(im)
+            self.for_distort(im)
+        else:
+            self.for_distort(im)
+            self.RandomContrast(im)
+
+        return im
+
 
 
 
