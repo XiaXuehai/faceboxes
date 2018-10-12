@@ -23,7 +23,7 @@ def detect(im):
 
     boxes, labels, probs = data_encoder.decode(loc.data.squeeze(0),
                                                 F.softmax(conf.squeeze(0), dim=1))
-    if probs != 0:
+    if probs[0] != 0:
         boxes = boxes.numpy()
         probs = probs.detach().numpy()
         if h <= w:
@@ -47,7 +47,7 @@ def testIm(file):
     h,w,_ = im.shape
     boxes, probs = detect(im)
 
-    if probs == 0:
+    if probs[0] == 0:
         print('There is no face in the image')
         exit()
     for i, (box) in enumerate(boxes):
@@ -71,6 +71,6 @@ if __name__ == '__main__':
 
     # given image path, predict and show
     root_path = "picture/"
-    picture = 'xx.jpg'
+    picture = '12.jpg'
     testIm(root_path + picture)
 

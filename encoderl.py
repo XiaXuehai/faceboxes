@@ -179,7 +179,7 @@ class DataEncoder:
 
         if labels.long().sum().item() is 0:
             # no face in image
-            return 0, 0, 0
+            return torch.tensor([0]), torch.tensor([0]), torch.tensor([0])
 
         ids = labels.nonzero().squeeze(1)
         # print('ids', ids)
