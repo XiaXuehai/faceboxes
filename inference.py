@@ -15,7 +15,7 @@ def detect(im):
     pad1, pad2 = dim_diff // 2, dim_diff - dim_diff // 2
     pad = ((pad1, pad2), (0, 0), (0, 0)) if h <= w else ((0, 0), (pad1, pad2), (0, 0))
     input_img = np.pad(im, pad, 'constant', constant_values=128)
-    input_img = cv2.resize(input_img,(1024,1024))/255
+    input_img = cv2.resize(input_img,(1024,1024))/255.
 
     im_tensor = torch.from_numpy(input_img.transpose((2,0,1))).float()
 
@@ -71,6 +71,6 @@ if __name__ == '__main__':
 
     # given image path, predict and show
     root_path = "picture/"
-    picture = '12.jpg'
+    picture = 'img_36.jpg'
     testIm(root_path + picture)
 
