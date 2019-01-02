@@ -17,7 +17,7 @@ class DataEncoder:
         aspect_ratios = ((1,2,4), (1,), (1,)) # more understanding
         feature_map_sizes = (32, 16, 8)
 
-        density = [[-3,-1,1,3],[-2,2],[0]] # density for output layer1
+        density = [[-3,-1,1,3],[-1,1],[0]] # density for output layer1
         
         num_layers = len(feature_map_sizes)
         boxes = []
