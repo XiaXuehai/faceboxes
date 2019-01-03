@@ -5,13 +5,21 @@ import torch.nn.functional as F
 
 from multibox_layer import MultiBoxLayer
 
+def init_model(m):
+	if isinstance(m, nn.Conv2d):
+		nn.init.xavier_normal_(m.weight)
+	elif isinstance(m, nn.BatchNorm2d):
+		nn.init.constant_(m.weight, 1)
+		nn.init.constant_(m.bias, 0)
+	return m
+
 
 def conv_bn_relu(in_channels,out_channels,kernel_size,stride=1,padding=0):
-	return nn.Sequential(
-        nn.Conv2d(in_channels,out_channels,kernel_size=kernel_size,padding=padding,stride=stride),
-        nn.BatchNorm2d(out_channels),
-        nn.ReLU(True)
-    )
+	m0 = nn.Conv2d(in_channels,out_channels,kernel_size=kernel_size,padding=padding,stride=stride)
+	m0 = init_model(m0)
+	m1 = nn.BatchNorm2d(out_channels)
+	m1 = init_model(m1)
+	return nn.Sequential(m0, m1, nn.ReLU(True))
 
 
 class Inception(nn.Module):
@@ -48,9 +56,13 @@ class FaceBox(nn.Module):
 
 		#model
 		self.conv1 = nn.Conv2d(3,24,kernel_size=7,stride=4,padding=3)
+		self.conv1 = init_model(self.conv1)
 		self.bn1 = nn.BatchNorm2d(24)
+		self.bn1 = init_model(self.bn1)
 		self.conv2 = nn.Conv2d(48,64,kernel_size=5,stride=2,padding=2)
+		self.conv2 = init_model(self.conv2)
 		self.bn2 = nn.BatchNorm2d(64)
+		self.bn2 = init_model(self.bn2)
 
 		self.inception1 = Inception()
 		self.inception2 = Inception()
@@ -62,6 +74,7 @@ class FaceBox(nn.Module):
 		self.conv4_2 = conv_bn_relu(128,256,kernel_size=3,stride=2,padding=1)
 
 		self.multilbox = MultiBoxLayer()
+
 
 	def forward(self,x):
 		hs = []

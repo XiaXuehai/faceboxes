@@ -6,6 +6,13 @@ import torch.nn as nn
 import torch.nn.init as init
 import torch.nn.functional as F
 
+def init_model(m):
+	if isinstance(m, nn.Conv2d):
+		nn.init.xavier_normal_(m.weight)
+	elif isinstance(m, nn.BatchNorm2d):
+		nn.init.constant_(m.weight, 1)
+		nn.init.constant_(m.bias, 0)
+	return m
 
 class MultiBoxLayer(nn.Module):
 	num_classes = 2
@@ -18,8 +25,12 @@ class MultiBoxLayer(nn.Module):
 		self.loc_layers = nn.ModuleList()
 		self.conf_layers = nn.ModuleList()
 		for i in range(len(self.in_planes)):
-			self.loc_layers.append(nn.Conv2d(self.in_planes[i], self.num_anchors[i]*4, kernel_size=3, padding=1))
-			self.conf_layers.append(nn.Conv2d(self.in_planes[i],self.num_anchors[i]*2, kernel_size=3, padding=1))
+			m0 = nn.Conv2d(self.in_planes[i], self.num_anchors[i] * 4, kernel_size=3, padding=1)
+			m0 = init_model(m0)
+			m1 = nn.Conv2d(self.in_planes[i], self.num_anchors[i] * 2, kernel_size=3, padding=1)
+			m1 = init_model(m1)
+			self.loc_layers.append(m0)
+			self.conf_layers.append(m1)
 
 	def forward(self,xs):
 		'''
