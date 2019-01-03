@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 def init_model(m):
 	if isinstance(m, nn.Conv2d):
-		nn.init.xavier_normal_(m.weight)
+		nn.init.xavier_uniform_(m.weight)
 	elif isinstance(m, nn.BatchNorm2d):
 		nn.init.constant_(m.weight, 1)
 		nn.init.constant_(m.bias, 0)
